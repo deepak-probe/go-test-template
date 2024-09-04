@@ -2,28 +2,41 @@ package main
 
 import (
 	"log"
-	"user-api/internal/di"
-	"user-api/internal/user/handler"
-	"user-api/internal/user/router"
+	"user-api/di"
+	book_handler "user-api/internal/book/handler"
+	book_router "user-api/internal/book/router"
+	user_handler "user-api/internal/user/handler"
+	user_router "user-api/internal/user/router"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
+	// Build the DI container
 	container := di.BuildContainer()
 
-	err := container.Invoke(func(userHandler *handler.UserHandler) {
+	// Invoke dependencies and start the server
+	if err := container.Invoke(func(userHandler *user_handler.UserHandler, bookHandler *book_handler.BookHandler) error {
 		app := fiber.New()
 
-		// Setup routes
-		router.SetupRoutes(app, userHandler)
+		// Create a common prefix group
+		api := app.Group("/api")
 
+		// Setup user routes under /api/users
+		userGroup := api.Group("/users")
+		user_router.SetupUserRoutes(userGroup, userHandler)
+
+		// Setup book routes under /api/books
+		bookGroup := api.Group("/books")
+		book_router.SetupBookRoutes(bookGroup, bookHandler)
+
+		// Start the server
 		if err := app.Listen(":8080"); err != nil {
-			log.Fatalf("Failed to start server: %v", err)
+			return err
 		}
-	})
 
-	if err != nil {
-		log.Fatalf("Failed to invoke dependencies: %v", err)
+		return nil
+	}); err != nil {
+		log.Fatalf("Failed to invoke dependencies or start server: %v", err)
 	}
 }
