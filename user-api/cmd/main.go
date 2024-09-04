@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-	"user-api/di"
+	"user-api/injection"
 	book_handler "user-api/internal/book/handler"
 	book_router "user-api/internal/book/router"
 	user_handler "user-api/internal/user/handler"
@@ -13,7 +13,7 @@ import (
 
 func main() {
 	// Build the DI container
-	container := di.BuildContainer()
+	container := injection.BuildContainer()
 
 	// Invoke dependencies and start the server
 	if err := container.Invoke(func(userHandler *user_handler.UserHandler, bookHandler *book_handler.BookHandler) error {
